@@ -1,0 +1,7 @@
+---
+
+- import_playbook: install_jenkins.yml
+
+- import_playbook: install_jenkins_agent.yml
+
+- import_playbook: install_sonarqube.yml

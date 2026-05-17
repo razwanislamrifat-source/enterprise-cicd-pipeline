@@ -1,0 +1,31 @@
+{
+ "collection_info": {
+  "namespace": "community",
+  "name": "proxmox",
+  "version": "1.6.0",
+  "authors": [
+   "Ansible community (https://github.com/ansible-community)"
+  ],
+  "readme": "README.md",
+  "tags": [
+   "community",
+   "proxmox"
+  ],
+  "description": "Community modules and plugins for Proxmox.",
+  "license": [],
+  "license_file": "COPYING",
+  "dependencies": {},
+  "repository": "https://github.com/ansible-collections/community.proxmox",
+  "documentation": null,
+  "homepage": "https://github.com/ansible-collections/community.proxmox",
+  "issues": "https://github.com/ansible-collections/community.proxmox/issues"
+ },
+ "file_manifest_file": {
+  "name": "FILES.json",
+  "ftype": "file",
+  "chksum_type": "sha256",
+  "chksum_sha256": "1efd6594e8925408c882fa8cb46cdb0bb01ccb46a13dd2e8dc376f0eabed7083",
+  "format": 1
+ },
+ "format": 1
+}

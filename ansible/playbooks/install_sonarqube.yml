@@ -1,0 +1,58 @@
+---
+- name: Deploy SonarQube container
+  hosts: ansible_controller
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Install Docker engine
+      ansible.builtin.yum:
+        name: docker
+        state: present
+
+    - name: Enable and start Docker service
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Set vm.max_map_count required by SonarQube
+      ansible.builtin.sysctl:
+        name: vm.max_map_count
+        value: '262144'
+        state: present
+        reload: true
+
+    - name: Pull SonarQube LTS image
+      ansible.builtin.command: docker pull sonarqube:lts-community
+      register: sonarqube_pull
+      changed_when: "'Downloaded newer image' in sonarqube_pull.stdout or 'Pull complete' in sonarqube_pull.stdout"
+
+    - name: Check whether SonarQube container exists
+      ansible.builtin.command: docker container inspect sonarqube
+      register: sonarqube_container
+      changed_when: false
+      failed_when: false
+
+    - name: Run SonarQube container
+      ansible.builtin.command: >
+        docker run -d --name sonarqube
+        --restart unless-stopped
+        -p 9000:9000
+        sonarqube:lts-community
+      when: sonarqube_container.rc != 0
+
+    - name: Ensure existing SonarQube container is started
+      ansible.builtin.command: docker start sonarqube
+      register: sonarqube_start
+      changed_when: sonarqube_start.rc == 0
+      failed_when: false
+      when: sonarqube_container.rc == 0
+
+    - name: Ensure SonarQube container restart policy is unless-stopped
+      ansible.builtin.command: docker update --restart unless-stopped sonarqube
+      when: sonarqube_container.rc == 0
+
+    - name: Display SonarQube URL hint
+      ansible.builtin.debug:
+        msg: "SonarQube should be reachable at http://<ansible_controller_ip>:9000"

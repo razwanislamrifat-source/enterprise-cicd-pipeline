@@ -1,0 +1,68 @@
+---
+- name: Install Jenkins on Jenkins Master
+  hosts: jenkins_master
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Install Java and Jenkins
+      ansible.builtin.yum:
+        name:
+          - java-17-amazon-corretto
+          - firewalld
+        state: present
+
+    - name: Configure Jenkins repository
+      block:
+        - name: Add Jenkins yum repository
+          ansible.builtin.get_url:
+            url: https://pkg.jenkins.io/redhat-stable/jenkins.repo
+            dest: /etc/yum.repos.d/jenkins.repo
+            mode: '0644'
+
+        - name: Import Jenkins GPG key
+          ansible.builtin.rpm_key:
+            state: present
+            key: https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+
+    - name: Install Jenkins
+      ansible.builtin.yum:
+        name: jenkins
+        state: present
+
+    - name: Manage firewalld service
+      ansible.builtin.service:
+        name: firewalld
+        state: started
+        enabled: true
+
+    - name: Configure firewall for Jenkins
+      ansible.posix.firewalld:
+        port: 8080/tcp
+        permanent: true
+        state: enabled
+        immediate: true
+
+    - name: Start Jenkins service
+      ansible.builtin.service:
+        name: jenkins
+        state: started
+        enabled: true
+
+    - name: Wait for Jenkins startup
+      ansible.builtin.wait_for:
+        path: /var/lib/jenkins/secrets/initialAdminPassword
+        timeout: 300
+
+    - name: Retrieve initial admin password
+      ansible.builtin.slurp:
+        src: /var/lib/jenkins/secrets/initialAdminPassword
+      register: jenkins_password
+
+    - name: Save credentials to file
+      ansible.builtin.copy:
+        content: "{{ jenkins_password['content'] | b64decode }}"
+        dest: /tmp/jenkins_initial_password.txt
+        mode: '0600'
+      delegate_to: localhost
+      become: false

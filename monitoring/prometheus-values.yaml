@@ -1,0 +1,17 @@
+grafana:
+  enabled: true
+  adminPassword: admin123
+
+prometheus:
+  enabled: true
+  prometheusSpec:
+    retention: 15d
+    additionalScrapeConfigs:
+      - job_name: advanced-cicd-app
+        metrics_path: /actuator/prometheus
+        static_configs:
+          - targets:
+              - advanced-cicd-app.advanced-cicd.svc.cluster.local:8080
+
+alertmanager:
+  enabled: true

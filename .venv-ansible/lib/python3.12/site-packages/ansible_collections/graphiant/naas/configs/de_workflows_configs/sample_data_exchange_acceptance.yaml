@@ -1,0 +1,110 @@
+---
+# Sample Data Exchange Service Acceptance Configuration
+# This file demonstrates the configuration structure for accepting Data Exchange service invitations
+# Used in Workflow 4: Data Exchange - Accept Invitation (Non-Graphiant Customer)
+
+# All configurations are under 'data_exchange_acceptances' key
+# Each acceptance uses human-readable names that will be resolved to IDs by the data exchange manager
+# POST to v1/extranets-b2b-peering/consumer/{match_id}
+
+# List format (always a list, even for single acceptance):
+data_exchange_acceptances:
+  - customerName: "FinanceInc"             # Customer name and service name combination will be used to lookup matchId
+    serviceName: "de-service-1"        # Service name (will be used to lookup serviceId)
+    
+    # Site Information Configuration (by name)
+    siteInformation:
+      - sites: ["site-sjc-sdktest"]            # List of site names (will be resolved to site IDs)
+        siteLists: []                          # Optional site list names (empty for direct site selection)
+    
+    # NAT Configuration (optional)
+    # Lists producer service prefixes (optionally NAT them to avoid overlap with customer network)
+    nat:
+      - prefix: "10.1.1.0/24"                    # Producer service prefix
+        tag: "s-1-prefix1"                       # Corresponding tag from service prefixes
+        # translatedPrefix: null                 # Optional: NAT producer prefix if needed to avoid overlap
+        # outsideNatPrefix: null                 # Optional: Outside NAT prefix
+             
+    
+    # Policy Configuration (by name)
+    policy:
+      - lanSegment: "customer-1-segment"  # LAN segment name (will be resolved to ID)
+        consumerPrefixes:                      # Customer/Consumer's own prefixes that will be advertised
+          - "10.101.0.0/24"                    # Customer's own /24 network
+
+    # Site-to-Site VPN Configuration
+    siteToSiteVpn:
+      # IPSec Gateway Details
+      ipsecGatewayDetails:
+        name: "s2s-FinanceInc"                 # Gateway name
+        destinationAddress: "0.0.0.0"          # Customer's external IP
+        mtu: null                              # Optional MTU setting
+        tcpMss: null                           # Optional TCP MSS setting
+        remoteIkePeerIdentity: "0.0.0.0"       # Optional remote IKE peer identity
+        ikeInitiator: false                    # IKE initiation mode (false = responder)
+        
+        # Tunnel 1 Configuration
+        tunnel1:
+          localIkePeerIdentity: "0.0.0.0"       # Optional local IKE peer identity
+          insideIpv4Cidr: "169.254.0.108/30"    # Optional Inside IPv4 subnet for tunnel 1 (will be auto filled by Graphiant portal APIs)
+          insideIpv6Cidr: "fe80::108/126"       # Optional Inside IPv6 subnet for tunnel 1 (will be auto filled by Graphiant portal APIs)
+          psk: null                             # Optional Preshared key for tunnel 1 (will be auto filled by Graphiant portal APIs)
+        
+        # Tunnel 2 Configuration  
+        tunnel2:
+          localIkePeerIdentity: "0.0.0.0"       # Optional local IKE peer identity
+          insideIpv4Cidr: null                  # Optional Inside IPv4 subnet for tunnel 2 (will be auto filled by Graphiant portal APIs)
+          insideIpv6Cidr: null                  # Optional Inside IPv6 subnet for tunnel 2 (will be auto filled by Graphiant portal APIs)
+          psk: null                             # Optional Preshared key for tunnel 2 (will be auto filled by Graphiant portal APIs)
+      
+        # BGP Routing Configuration
+        routing:
+          # static:
+          #   destinationPrefix:
+          #     - "10.101.0.0/24"                    # Customer's own /24 network
+          bgp:
+            peerAsn: 65501
+            holdTimer: 180
+            keepaliveTimer: 60
+            md5Password: {"md5_password": "bgppassword"}
+            sendCommunity: true
+            addressFamilies:
+              ipv4:
+                family:
+                  addressFamily: "ipv4"
+                  inboundPolicy:
+                    policy: "test_bgp_inbound_filter"
+                  outboundPolicy:
+                    policy: "test_bgp_outbound_filter"
+              ipv6:
+                family:
+                  addressFamily: "ipv6"
+                  inboundPolicy: {}
+                  outboundPolicy: {}
+
+        # VPN Profile Selection
+        vpnProfile: "vpnprofile-global-test"  # System VPN profile name
+
+      # Selected Region (by name)
+      region: "us-central-1 (Chicago)"       # Region name (will be resolved to regionId)
+
+      # Email notifications
+      emails: ["finance@financeinc.com"]       # Email addresses for notifications
+
+    # Optional Graphiant Routing Policy: Attach global object Graphiant filters to Graphiant gateway devices involved in the acceptance
+    globalObjectOps:
+      "gw-2-sdktest":   # Device name will be resolved to device ID
+        routingPolicyOps:
+          "Policy-Clt1-Primary": "Attach"
+      "gw-4-sdktest":   # Device name will be resolved to device ID
+        routingPolicyOps:
+          "Policy-Clt1-Primary": "Attach"
+
+# Multiple acceptance format (alternative):
+# data_exchange_acceptances:
+#   - customerName: "FinanceBank-001"
+#     serviceName: "de-service-scale-001"
+#     # ... (same structure as above)
+#   - customerName: "AnotherCustomer"
+#     serviceName: "de-service-scale-002"
+#     # ... (same structure as above)

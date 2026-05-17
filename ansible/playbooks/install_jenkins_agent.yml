@@ -1,0 +1,127 @@
+---
+- name: Prepare Jenkins Agent node
+  hosts: jenkins_agent
+  become: true
+  gather_facts: true
+
+  vars:
+    maven_version: "3.9.4"
+    maven_archive: "apache-maven-{{ maven_version }}-bin.tar.gz"
+    maven_url: "https://archive.apache.org/dist/maven/maven-3/{{ maven_version }}/binaries/{{ maven_archive }}"
+    maven_install_dir: "/opt/apache-maven-{{ maven_version }}"
+
+  tasks:
+    - name: Install prerequisite system packages
+      ansible.builtin.yum:
+        name:
+          - curl
+          - tar
+          - gzip
+          - unzip
+        state: present
+
+    - name: Install Amazon Corretto 17
+      ansible.builtin.yum:
+        name: java-17-amazon-corretto
+        state: present
+
+    - name: Download Maven {{ maven_version }} archive
+      ansible.builtin.get_url:
+        url: "{{ maven_url }}"
+        dest: "/tmp/{{ maven_archive }}"
+        mode: '0644'
+
+    - name: Extract Maven to /opt
+      ansible.builtin.unarchive:
+        src: "/tmp/{{ maven_archive }}"
+        dest: /opt
+        remote_src: true
+        creates: "{{ maven_install_dir }}"
+
+    - name: Configure Maven environment profile
+      ansible.builtin.copy:
+        dest: /etc/profile.d/maven.sh
+        mode: '0644'
+        content: |
+          export M2_HOME={{ maven_install_dir }}
+          export MAVEN_HOME={{ maven_install_dir }}
+          export PATH={{ maven_install_dir }}/bin:$PATH
+
+    - name: Install Docker engine
+      ansible.builtin.yum:
+        name: docker
+        state: present
+
+    - name: Enable and start Docker service
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Add ec2-user to docker group
+      ansible.builtin.user:
+        name: ec2-user
+        groups: docker
+        append: true
+
+    - name: Create jenkins user and add to docker group
+      ansible.builtin.user:
+        name: jenkins
+        shell: /bin/bash
+        create_home: true
+        groups: docker
+        append: true
+
+    - name: Fetch latest stable kubectl version
+      ansible.builtin.uri:
+        url: https://dl.k8s.io/release/stable.txt
+        return_content: true
+      register: kubectl_stable
+
+    - name: Set kubectl version fact
+      ansible.builtin.set_fact:
+        kubectl_version: "{{ kubectl_stable.content | trim }}"
+
+    - name: Install kubectl latest binary
+      ansible.builtin.get_url:
+        url: "https://dl.k8s.io/release/{{ kubectl_version }}/bin/linux/amd64/kubectl"
+        dest: /usr/local/bin/kubectl
+        mode: '0755'
+
+    - name: Check AWS CLI installation
+      ansible.builtin.command: /usr/local/bin/aws --version
+      register: aws_cli_check
+      changed_when: false
+      failed_when: false
+
+    - name: Download AWS CLI v2 installer archive
+      ansible.builtin.get_url:
+        url: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+        dest: /tmp/awscliv2.zip
+        mode: '0644'
+      when: aws_cli_check.rc != 0
+
+    - name: Extract AWS CLI v2 installer
+      ansible.builtin.unarchive:
+        src: /tmp/awscliv2.zip
+        dest: /tmp
+        remote_src: true
+      when: aws_cli_check.rc != 0
+
+    - name: Run AWS CLI v2 installer
+      ansible.builtin.command: /tmp/aws/install
+      when: aws_cli_check.rc != 0
+
+    - name: Show installed tool versions
+      ansible.builtin.shell: |
+        java -version
+        {{ maven_install_dir }}/bin/mvn -version
+        docker --version
+        kubectl version --client
+        /usr/local/bin/aws --version
+      register: tool_versions
+      changed_when: false
+
+    - name: Display tool versions
+      ansible.builtin.debug:
+        var: tool_versions.stdout_lines
