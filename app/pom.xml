@@ -34,13 +34,6 @@
         </dependency>
     </dependencies>
 
-    <distributionManagement>
-        <repository>
-            <id>jfrog-releases</id>
-            <name>JFrog Maven Releases</name>
-            <url>https://${env.JFROG_URL}/artifactory/maven-libs-release-local</url>
-        </repository>
-    </distributionManagement>
 
     <build>
         <finalName>advanced-cicd-app-2.0.0</finalName>
