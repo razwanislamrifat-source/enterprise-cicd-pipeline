@@ -48,3 +48,5 @@ logs/
 *.log
 build/
 dist/
+.venv-ansible/
+PROJECT_PROMPT.md
