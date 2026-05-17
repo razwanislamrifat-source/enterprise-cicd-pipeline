@@ -15,12 +15,10 @@ spec:
       labels:
         app: advanced-cicd-app
     spec:
-      imagePullSecrets:
-        - name: dockercred
       containers:
         - name: advanced-cicd-app
           image: advanced-cicd-app:2.0.0
-          imagePullPolicy: Always
+          imagePullPolicy: Never
           ports:
             - containerPort: 8080
           resources:
