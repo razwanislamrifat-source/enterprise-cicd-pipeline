@@ -5,6 +5,7 @@ pipeline {
         APP_NAME = 'advanced-cicd-app'
         APP_VERSION = '2.0.0'
         SONARQUBE_URL = 'http://sonarqube:9000'
+        DOCKER_IMAGE = "razwanff/${APP_NAME}:${APP_VERSION}"
     }
     stages {
         stage('Build') {
@@ -39,7 +40,16 @@ pipeline {
         stage('Docker Build') {
             steps {
                 script {
-                    dockerImage = docker.build("${env.APP_NAME}:${env.APP_VERSION}")
+                    dockerImage = docker.build("${env.DOCKER_IMAGE}")
+                }
+            }
+        }
+        stage('Docker Push') {
+            steps {
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-credentials') {
+                        dockerImage.push()
+                    }
                 }
             }
         }
