@@ -1,177 +1,346 @@
-# Advanced CI/CD Pipeline
+# Enterprise CI/CD Pipeline
 
-Enterprise-grade CI/CD infrastructure demonstrating end-to-end DevOps practices with Java/Spring Boot, Jenkins, Docker, Kubernetes, and infrastructure automation.
+![Java](https://img.shields.io/badge/Java-17-orange?style=flat-square&logo=java)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.5-green?style=flat-square&logo=springboot)
+![Maven](https://img.shields.io/badge/Maven-3.9.4-C71A36?style=flat-square&logo=apachemaven)
+![Jenkins](https://img.shields.io/badge/Jenkins-Automation-D24939?style=flat-square&logo=jenkins)
+![Docker](https://img.shields.io/badge/Docker-Containerization-2496ED?style=flat-square&logo=docker)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-Orchestration-326CE5?style=flat-square&logo=kubernetes)
+![SonarQube](https://img.shields.io/badge/SonarQube-Code%20Quality-4E9BCD?style=flat-square&logo=sonarqube)
+![Build](https://img.shields.io/badge/Build-Passing-brightgreen?style=flat-square)
+
+---
 
 ## Overview
 
-This project provides a complete CI/CD pipeline including:
-- **Application**: Spring Boot 3.3.5 REST service with health checks
-- **CI/CD**: Jenkins declarative pipeline with 8 stages
-- **Build**: Maven with artifact repository integration
-- **Containerization**: Docker multi-stage builds
-- **Orchestration**: Kubernetes deployment manifests
-- **Infrastructure**: Terraform IaC with AWS VPC, EC2, Security Groups
-- **Automation**: Ansible playbooks for environment setup
-- **Quality**: SonarQube code analysis and quality gates
-- **Monitoring**: Prometheus + Grafana stack
+An **enterprise-grade, fully automated CI/CD pipeline** built on Ubuntu Linux that demonstrates industry-standard DevOps practices. This project showcases a complete software delivery workflow from code commit to live Kubernetes deployment, with integrated quality gates and containerization.
 
-## Prerequisites
+**Perfect for DevOps roles:** This is a real-world implementation, not a tutorial project.
 
-- Git
-- Java 17 JDK
-- Maven 3.9.4
-- Docker
-- Kubernetes CLI (kubectl)
-- Terraform >= 1.5.0
-- Ansible
-- AWS CLI with credentials configured
+---
 
-## Quick Start
+## What This Project Does
 
-### 1. Infrastructure Setup
+Every time code is pushed to GitHub, the pipeline **automatically orchestrates** an 8-stage delivery workflow:
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                                                         │
+│  Git Push  →  Checkout  →  Build  →  Unit Tests  →  Code Quality   │
+│                                                         (SonarQube)      │
+│                              ↓                            ↓             │
+│              Quality Gate ← Enforce ← Analysis Complete                 │
+│                              ↓                                          │
+│        Docker Image Build → Push to Registry → Deploy to K8s          │
+│                 (Docker)      (DockerHub)      (Minikube)             │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Pipeline Stages (8 Total)
+
+| # | Stage | Purpose | Tool |
+|---|-------|---------|------|
+| 1 | **Checkout SCM** | Pull latest code from GitHub | Git |
+| 2 | **Build** | Compile Java Spring Boot application | Maven |
+| 3 | **Unit Tests** | Run automated test suite | JUnit + Maven |
+| 4 | **SonarQube Analysis** | Static code quality scan | SonarQube |
+| 5 | **Quality Gate** | Enforce code standards (⚠️ FAILS if quality is poor) | SonarQube |
+| 6 | **Docker Build** | Create container image | Docker |
+| 7 | **Docker Push** | Upload to registry | DockerHub |
+| 8 | **Deploy to K8s** | Live deployment on cluster | Kubectl + Minikube |
+
+---
+
+## Technology Stack
+
+| Layer | Technology | Version | Purpose |
+|-------|-----------|---------|---------|
+| **Language** | Java | 17 (LTS) | Application runtime |
+| **Framework** | Spring Boot | 3.3.5 | Web application framework |
+| **Build Tool** | Maven | 3.9.4 | Dependency & build management |
+| **CI/CD Orchestration** | Jenkins | Latest | Pipeline automation & orchestration |
+| **Code Quality** | SonarQube | Latest | Static analysis & quality gates |
+| **Containerization** | Docker | Latest | Image creation & management |
+| **Container Registry** | DockerHub | — | Image storage & versioning |
+| **Orchestration** | Kubernetes | Minikube | Container deployment & scaling |
+| **OS** | Ubuntu Linux | 22.04 LTS | Host operating system |
+
+---
+
+## 🎯 Key Features
+
+✅ **Fully Automated** — Single git push triggers entire pipeline  
+✅ **Quality Gates** — Prevents low-quality code from deployment  
+✅ **Container Native** — Docker + Kubernetes ready  
+✅ **Production Ready** — Enterprise-grade configurations  
+✅ **Local Infrastructure** — No cloud dependencies (fully portable)  
+✅ **Comprehensive Logging** — Track every stage of the pipeline  
+✅ **Fast Feedback** — Full pipeline execution in ~5-10 minutes  
+
+---
+
+## 📸 Pipeline in Action
+
+### Jenkins Pipeline Dashboard — All Stages Green
+
+![Pipeline Success](screenshots/pipeline-success.png)
+
+*Jenkins displaying all 8 pipeline stages completing successfully with no failures.*
+
+---
+
+### SonarQube Code Quality Analysis
+
+![SonarQube Dashboard](screenshots/sonarqube-dashboard.png)
+
+*Code quality metrics and analysis results from SonarQube integration, showing passed quality gates.*
+
+---
+
+### Kubernetes Pods Running
+
+![Kubectl Pods](screenshots/kubectl-pods.png)
+
+*Kubernetes cluster displaying the deployed application pods in Running state.*
+
+---
+
+### Live Application Running
+
+![App Running](screenshots/app-running.png)
+
+*The Spring Boot application successfully running and serving requests in the browser.*
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+Ensure you have the following installed:
 
 ```bash
-cd terraform
-terraform init
-terraform plan -var="key_name=your-ec2-key" -out=tfplan
-terraform apply tfplan
+# Check versions
+java -version              # Java 17+
+mvn -version               # Maven 3.9+
+docker --version           # Docker
+kubectl version --client   # Kubectl
+minikube version           # Minikube
 ```
 
-### 2. Configuration Management
+### Local Setup
+
+#### 1. Start Minikube
 
 ```bash
-cd ../ansible
-ansible-playbook -i inventory.ini playbooks/site.yml
+minikube start --driver=docker
 ```
 
-### 3. Build Application
+#### 2. Connect Jenkins to Minikube Network
 
 ```bash
-cd ../app
-mvn clean package
+docker network connect minikube jenkins
 ```
 
-### 4. Deploy to Kubernetes
+#### 3. Create Jenkins Credentials
+
+Log in to Jenkins UI (`http://localhost:8080`) and add:
+
+- **DockerHub Credentials**
+  - Credential ID: `dockerhub-credentials`
+  - Username: Your DockerHub username
+  - Password/Token: Your DockerHub access token
+
+- **SonarQube Token**
+  - Credential ID: `jinkies`
+  - Token: Your SonarQube authentication token
+
+#### 4. Configure the Jenkins Pipeline
+
+Create a new Multibranch Pipeline job:
+
+- **Repository URL:** `https://github.com/razwanislamrifat-source/enterprise-cicd-pipeline`
+- **Branch Source:** GitHub
+- **Script Path:** `Jenkinsfile`
+
+#### 5. Trigger the Pipeline
+
+Push code to the repository:
 
 ```bash
-cd ../
-./deploy.sh
+git add .
+git commit -m "Trigger pipeline"
+git push origin main
 ```
 
-## Project Structure
-
-```
-.
-├── app/                          # Spring Boot application
-│   ├── src/main/java/           # Application source
-│   └── pom.xml                   # Maven configuration
-├── Dockerfile                    # Multi-stage Docker build
-├── Jenkinsfile                   # Jenkins pipeline
-├── k8s/                          # Kubernetes manifests
-│   ├── namespace.yaml
-│   ├── deployment.yaml
-│   ├── service.yaml
-│   └── secret.yaml
-├── terraform/                    # Infrastructure as Code
-│   ├── versions.tf
-│   ├── variables.tf
-│   ├── vpc.tf
-│   ├── ec2.tf
-│   └── security_groups.tf
-├── ansible/                      # Configuration management
-│   ├── playbooks/
-│   └── roles/
-├── monitoring/                   # Prometheus & Grafana config
-├── sonar-project.properties      # SonarQube configuration
-└── deploy.sh                     # Deployment script
-```
-
-## Configuration
-
-### Jenkins Credentials
-
-Create the following credentials in Jenkins:
-- `jfrog-artifactory-credentials`: JFrog username/password
-- `sonarqube-token`: SonarQube authentication token
-- `docker-registry-credentials`: JFrog Docker registry credentials
-
-See [CREDENTIALS.md](CREDENTIALS.md) for detailed setup instructions.
-
-### Terraform Variables
+Monitor progress at `http://localhost:8080` (Jenkins) or:
 
 ```bash
-cp terraform/terraform.tfvars.example terraform/terraform.tfvars
-# Edit terraform/terraform.tfvars with your values
+# Watch Kubernetes deployment
+kubectl get pods -w
+
+# Check deployed service
+kubectl get svc
 ```
 
-### Kubernetes Secret
+---
 
-Generate and update the Docker credentials secret:
+## 📋 How It Works
 
+### Architecture Flow
+
+1. **Developer Push** → Code committed to GitHub
+2. **Webhook Trigger** → GitHub notifies Jenkins via webhook
+3. **Pipeline Execution** → Jenkins runs the Jenkinsfile
+4. **Quality Check** → SonarQube validates code standards
+5. **Build & Package** → Docker image created and pushed
+6. **Deployment** → Kubectl deploys to Minikube cluster
+7. **Feedback** → Results posted back to GitHub PR (if applicable)
+
+### Environment Variables & Secrets
+
+| Variable | Type | Purpose |
+|----------|------|---------|
+| `DOCKER_REGISTRY` | Env | DockerHub registry URL |
+| `DOCKER_IMAGE` | Env | Image name (razwanff/enterprise-app) |
+| `K8S_NAMESPACE` | Env | Kubernetes namespace |
+| `SONAR_HOST_URL` | Env | SonarQube server URL |
+| `SONAR_LOGIN` | Secret | SonarQube authentication token |
+
+---
+
+## 🔧 Configuration Files
+
+- **Jenkinsfile** — Pipeline definition (8 stages)
+- **Dockerfile** — Container image specification
+- **pom.xml** — Maven dependencies & build configuration
+- **application.properties** — Spring Boot application settings
+- **k8s-deployment.yaml** — Kubernetes deployment manifest
+
+---
+
+## 🆘 Troubleshooting
+
+### Issue: Jenkins Can't Connect to Docker Daemon
+
+**Solution:**
 ```bash
-cat ~/.docker/config.json | base64 -w 0
-# Copy output to k8s/secret.yaml
+# Ensure Docker socket is accessible
+sudo usermod -aG docker jenkins
+docker network connect minikube jenkins
 ```
 
-## Pipeline Stages
+### Issue: SonarQube Quality Gate Fails
 
-1. **Build**: Maven clean deploy with artifact repository
-2. **Unit Test**: Run test suite and generate reports
-3. **SonarQube Analysis**: Code quality scanning
-4. **Quality Gate**: Enforce quality standards
-5. **Publish JAR**: Upload artifacts to JFrog
-6. **Docker Build**: Create container image
-7. **Docker Publish**: Push image to registry
-8. **Deploy to EKS**: Deploy to Kubernetes cluster
+**Check:**
+```bash
+# View SonarQube logs
+docker logs sonarqube
 
-## Environment Variables
+# Access dashboard
+http://localhost:9000
+```
 
-Key environment variables used in the pipeline:
-- `APP_NAME`: Application identifier
-- `APP_VERSION`: Application version
-- `JFROG_URL`: JFrog Artifactory endpoint
-- `SONARQUBE_URL`: SonarQube server endpoint
+Adjust quality gate thresholds in SonarQube Project Settings if needed.
 
-## Kubernetes Deployment
+### Issue: Docker Image Push Fails
 
-The deployment manifests include:
-- **Namespace**: Isolated environment for the application
-- **Deployment**: 2 replicas with resource limits
-- **Service**: LoadBalancer exposing port 80 → 8080
-- **Health Checks**: Liveness probe on `/actuator/health`
+**Verify credentials:**
+```bash
+docker login -u razwanff
+# Enter DockerHub token when prompted
+```
 
-## Monitoring
+Then re-run Jenkins build.
 
-Access monitoring stack via:
-- **Prometheus**: Scrapes metrics from Kubernetes
-- **Grafana**: Visualizes application and infrastructure metrics
+### Issue: Kubernetes Deployment Shows "ImagePullBackOff"
 
-## Troubleshooting
+**Solution:**
+```bash
+# Ensure image is in DockerHub
+docker images | grep razwanff
 
-### Build Failures
-- Check Maven dependencies: `mvn dependency:tree`
-- Verify Java 17 compatibility in pom.xml
-- Run tests locally: `mvn test`
+# Check image availability
+kubectl describe pod <pod-name>
 
-### Kubernetes Issues
-- Check pod status: `kubectl get pods -n advanced-cicd`
-- View logs: `kubectl logs -f <pod-name> -n advanced-cicd`
-- Describe pod: `kubectl describe pod <pod-name> -n advanced-cicd`
+# Retry deployment
+kubectl rollout restart deployment/<deployment-name>
+```
 
-### SonarQube Quality Gate
-- Review analysis at SonarQube UI
-- Check code coverage requirements
-- Fix security vulnerabilities before retry
+### Issue: Port Already in Use
 
-## Contributing
+**Find and stop conflicting container:**
+```bash
+lsof -i :8080   # Jenkins
+lsof -i :9000   # SonarQube
+lsof -i :5000   # Docker Registry (if applicable)
 
-Follow these practices:
-- Run `mvn clean test` before commits
-- Update version in pom.xml for releases
-- Test Dockerfile builds locally
-- Validate Terraform with `terraform validate`
-- Test Ansible playbooks in staging environment
+# Kill process
+kill -9 <PID>
+```
 
-## License
+### Issue: Maven Build Fails Locally
 
-Proprietary - Advanced DevOps Infrastructure
+**Clear cache and rebuild:**
+```bash
+mvn clean install
+# Or with offline tests
+mvn clean install -DskipTests
+```
+
+---
+
+## 📊 Performance Metrics
+
+| Metric | Typical Value |
+|--------|---------------|
+| Full Pipeline Duration | 5-10 minutes |
+| Build Stage | ~2 minutes |
+| SonarQube Analysis | ~1 minute |
+| Docker Build & Push | ~2 minutes |
+| K8s Deployment | ~1 minute |
+| Startup to Ready | ~30 seconds |
+
+---
+
+## 🎓 Learning Outcomes
+
+This project demonstrates proficiency in:
+
+- **CI/CD Design** — Multi-stage automated pipelines
+- **Infrastructure Automation** — Jenkins, Kubernetes, Docker
+- **Code Quality** — SonarQube integration & quality gates
+- **Containerization** — Docker image creation & registry management
+- **Container Orchestration** — Kubernetes deployments & scaling
+- **Build Automation** — Maven & dependency management
+- **DevOps Tools** — Industry-standard tooling
+- **Java/Spring Boot** — Enterprise application development
+
+---
+
+## 📝 Author
+
+**Razwan Islam**
+
+- GitHub: [@razwanislamrifat-source](https://github.com/razwanislamrifat-source)
+- Project: [enterprise-cicd-pipeline](https://github.com/razwanislamrifat-source/enterprise-cicd-pipeline)
+
+---
+
+## 📄 License
+
+This project is open source and available under the MIT License.
+
+---
+
+**⭐ If you found this project useful, please star it!**
+
+Access app after pipeline runs:
+kubectl get pods -n advanced-cicd
+minikube service advanced-cicd-app -n advanced-cicd --url
+
+## Author
+
+Razwan Islam — DevOps Portfolio Project
+GitHub: https://github.com/razwanislamrifat-source
